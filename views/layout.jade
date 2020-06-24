@@ -4,7 +4,6 @@ html
     title= title
     link(rel='stylesheet', href='/stylesheets/style.css')
     script.
-      document.domain = 'taikang.com'
 
       function getPositionOfElement(ele) {
         const top = ele.getBoundingClientRect().top
@@ -24,7 +23,7 @@ html
       }
 
       function getAllDT () {
-        const buttonTags = document.getElementsByTagName('button')
+        const buttonTags = document.getElementsByTagName('button') || []
         const inputTags = document.getElementsByTagName('input')
         const textareaTags = document.getElementsByTagName('textarea')
         const linkTags = document.getElementsByTagName('a')
@@ -98,7 +97,7 @@ html
       }
 
       window.addEventListener('message', e => {
-        if(e.origin === 'http://pm.taikang.com' || e.origin === 'http://pm.mobile.taikang.com' || e.origin === 'http://pm.taikang.com:8080') {
+        if(e.origin === 'http://localhost:8080' || e.origin === 'http://pm.mobile.taikang.com' || e.origin === 'http://127.0.0.1:8080') {
           console.log('start task' , e, window.TKDT)
 
           if(e.data && e.data.code === 'disableEvent') {
@@ -111,7 +110,7 @@ html
 
           if(e.data && e.data.code === 'trackingData') {
             let data = {}
-            data.imgUrl = '123213214'
+            data.imgUrl = 'suppose I am a data64 img url, Okay?'
             data.trackingData = getAllDT()
             data.pageId = 'Page_123213213213213'
             window.parent.postMessage(data, e.origin)
