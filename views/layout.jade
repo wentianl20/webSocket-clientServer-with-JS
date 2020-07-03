@@ -1,0 +1,124 @@
+doctype html
+html
+  head
+    title= title
+    link(rel='stylesheet', href='/stylesheets/style.css')
+    script.
+
+      function getPositionOfElement(ele) {
+        const top = ele.getBoundingClientRect().top
+        const left = ele.getBoundingClientRect().left
+        const width = ele.getBoundingClientRect().width
+        const height = ele.getBoundingClientRect().height
+
+        return {
+          id: ele.getAttribute('id'), // should use the id generation rule here
+          top,
+          left,
+          height,
+          width,
+          tagName: ele.tagName,
+          value: ele.innerHTML
+        }
+      }
+
+      function getAllDT () {
+        const buttonTags = document.getElementsByTagName('button') || []
+        const inputTags = document.getElementsByTagName('input')
+        const textareaTags = document.getElementsByTagName('textarea')
+        const linkTags = document.getElementsByTagName('a')
+
+        let tags = []
+        tags.push(...buttonTags, ...inputTags, ...textareaTags, ...linkTags)
+        const result = tags.filter( ele => {
+          return isElementVisible(ele)
+        })
+
+        result.forEach( (ele, index, array) => {
+          console.log(getPositionOfElement(ele))
+          array[index] = getPositionOfElement(ele)
+        })
+
+        return result
+      }
+
+      function isElementVisible (elem) {
+        if (
+          // document.hidden ||
+          elem.offsetWidth === 0 ||
+          elem.offsetHeight === 0 ||
+          elem.style.visibility === 'hidden' ||
+          elem.style.display === 'none' ||
+          elem.style.opacity === '0'
+        ) {
+          console.log('.... false as display none', elem.style)
+          return false
+        }
+
+        const x = window.pageXOffset ? window.pageXOffset + window.innerWidth - 1 : 0,
+                y = window.pageYOffset ? window.pageYOffset + window.innerHeight - 1 : 0,
+                relative = !!((!x && !y) || !document.elementFromPoint(x, y));
+
+        function inside( parent, child) {
+          while (child) {
+            if (child === parent) return true;
+            child = child.parentNode;
+          }
+          return false;
+        }
+
+        const rect = elem.getBoundingClientRect();
+        if (relative) {
+          if (!inside(document.elementFromPoint(rect.left + elem.offsetWidth / 2, rect.top + elem.offsetHeight / 2), elem)) {
+            console.log('... outside to false', document.elementFromPoint(rect.left + elem.offsetWidth / 2, rect.top + elem.offsetHeight / 2))
+            return false;
+          }
+        } else if (
+        !inside(document.elementFromPoint(rect.left + elem.offsetWidth/2 + window.pageXOffset, rect.top + elem.offsetHeight/2 + window.pageYOffset), elem) ||
+          ( rect.top + elem.offsetHeight/2 < 0 || rect.left + elem.offsetWidth/2 < 0 ||
+            rect.bottom - elem.offsetHeight/2 > (window.innerHeight || document.documentElement.clientHeight) ||
+            rect.right - elem.offsetWidth/2 > (window.innerWidth || document.documentElement.clientWidth ))) {
+          return false;
+        }
+
+        if (window.getComputedStyle || elem.currentStyle) {
+          let el = elem
+          let comp = null
+          while (el) {
+            if (el === document) {break;} else if(!el.parentNode) return false;
+            comp = window.getComputedStyle ? window.getComputedStyle(el, null) : el.currentStyle;
+            if (comp && (comp.visibility == 'hidden' || comp.display == 'none' || (typeof comp.opacity !== 'undefined' && comp.opacity != 1))) return false;
+            el = el.parentNode;
+          }
+        }
+        {
+          return true;
+        }
+      }
+
+      window.addEventListener('message', e => {
+        if(e.origin === 'http://localhost:8080' || e.origin === 'http://pm.mobile.taikang.com' || e.origin === 'http://127.0.0.1:8080') {
+          console.log('start task' , e, window.TKDT)
+
+          if(e.data && e.data.code === 'disableEvent') {
+            document.body.style.pointerEvents = 'none'
+          }
+
+          if (e.data && e.data.code === 'enableEvent') {
+            document.body.style.pointerEvents = 'auto'
+          }
+
+          if(e.data && e.data.code === 'trackingData') {
+            let data = {}
+            data.imgUrl = 'suppose I am a data64 img url, Okay?'
+            data.trackingData = getAllDT()
+            data.pageId = 'Page_123213213213213'
+            window.parent.postMessage(data, e.origin)
+          }
+        }
+      })
+
+
+  body
+    block content
+
